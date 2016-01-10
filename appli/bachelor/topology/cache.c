@@ -55,11 +55,12 @@ data_cache* get_cache() {
 	send_package_uuid(addr, &msg, sizeof(gossip_message));
 }*/
 
-uint8_t send_cache_segment(uint16_t addr, uint8_t type, cache_segment* cseg) {
+uint8_t send_cache_segment(uint16_t round_num, uint16_t addr, uint8_t type, cache_segment* cseg) {
 	static gossip_message msg;
 	int i;
 
 	msg.type = type;
+	msg.round = round_num;
 
 	// Cache segment is too large!
 	if (cseg->len > MAX_SEGMENT_SIZE) {

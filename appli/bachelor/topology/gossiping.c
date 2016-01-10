@@ -14,7 +14,9 @@
 
 static soft_timer_t alarm[1];
 
-uint32_t roundCounter;
+uint16_t roundCounter;
+
+char* typeStrings[2] = {"PUSH", "PULL"};
 
 static unsigned int pickPeer(uint32_t numberOfPeers) {
 	return random_rand32() % numberOfPeers;
@@ -28,7 +30,7 @@ static void handle_timer(handler_arg_t arg)
 
 /**
  * This method returns a segment of the cache, that can be transmitted
- * It ensures that begin <= end
+ * 
  * @return [description]
  */
 cache_segment prepareMsg() {
@@ -134,8 +136,8 @@ void active_thread(handler_arg_t arg) {
 
 	memcpy(&part, sigma.value, 4);
 
-	if (send_cache_segment(uuid_of_neighbour(id), MSG_PUSH, &sigma) < 0) {
-		ERROR("TOO-LARGE-SEGMENT");
+	if (send_cache_segment(roundCounter, uuid_of_neighbour(id), MSG_PUSH, &sigma) < 0) {
+		ERROR("TOO-LARGE-SEGMENT;\n");
 	}
 
 	MESSAGE("GOSSIP;%u;%04x;%u;\n", roundCounter, uuid_of_neighbour(id), part);
@@ -156,29 +158,12 @@ void update(uint16_t sender, gossip_message *received_message, cache_segment* cs
 	memcpy(&myValue, cache_value, sizeof(uint32_t));
 	memcpy(&receivedValue, cseg->value, sizeof(uint32_t));
 
-	/*for (i = 0; i < cseg->len; i++) {
-		if (cseg->value[i] != cache_value[i]) {
-			updateFlag = 1;
-		}
-	}*/
-	if (/*updateFlag*/myValue < receivedValue) {
+	if (myValue < receivedValue) {
 		// We received a new maximum, so refresh your cache!
-		//cache.value = received_message->value;
-		//cache.sender = sender;
-		//cache.source = received_message->source;
-		/*set_cache(&received_message->value,
-					sizeof(received_message->value),
-					sender,
-					received_message->source
-				);*/
 
 		set_cache_segment(cseg, sender, received_message->source);
 
-		/*uint32_t part;
-
-		memcpy(&part, cseg->value, 4);*/
-
-		MESSAGE("NEW-CACHE;%04x;%u;\n", sender, /*part*/ receivedValue);
+		MESSAGE("NEW-CACHE;%04x;%u;%u;\n", sender, received_message->round, receivedValue);
 	}
 }
 
@@ -193,7 +178,7 @@ void passive_thread(uint16_t src_addr, const uint8_t *data, uint8_t length) {
 
 	memcpy(&received_message, data, length);
 
-	MESSAGE("RECV;%04x;%u;%u;%u;\n", src_addr, length, received_message.type, received_message.value[2]);
+	MESSAGE("RECV;%04x;%u;%u;%s;\n", src_addr, received_message.round, length, typeStrings[received_message.type]);
 
 	
 	cseg.start = received_message.value[0];
@@ -203,7 +188,7 @@ void passive_thread(uint16_t src_addr, const uint8_t *data, uint8_t length) {
 	// On PUSH-Message answer with PULL - Message
 	if (received_message.type == MSG_PUSH) {
 		//send_cache(src_addr, MSG_PULL, get_cache());
-		send_cache_segment(src_addr, MSG_PULL, &cseg);
+		send_cache_segment(received_message.round, src_addr, MSG_PULL, &cseg);
 	}
 
 	update(src_addr, &received_message, &cseg);

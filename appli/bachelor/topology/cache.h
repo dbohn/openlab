@@ -27,9 +27,10 @@ typedef struct _cache data_cache;
 
 struct _gossip_message
 {
+	uint16_t round;		// 2 bytes
 	uint8_t type;		// 1 byte
 	uint16_t source;	// 2 bytes
-	uint8_t value[6];	// 2+4 = 6 bytes => 9 bytes struct size
+	uint8_t value[6];	// 2+4 = 6 bytes => 11 bytes struct size
 } __attribute__ ((packed));
 
 typedef struct _gossip_message gossip_message;
@@ -63,6 +64,6 @@ data_cache* get_cache();
 
 void set_cache_segment(cache_segment* data, uint16_t sender, uint16_t source);
 
-uint8_t send_cache_segment(uint16_t addr, uint8_t type, cache_segment* cseg);
+uint8_t send_cache_segment(uint16_t round_num, uint16_t addr, uint8_t type, cache_segment* cseg);
 
 #endif
