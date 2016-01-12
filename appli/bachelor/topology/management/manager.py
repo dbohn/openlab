@@ -2,6 +2,9 @@
 from iotlabaggregator import serial
 from iotlabcli.parser import common as common_parser
 
+import line
+import time
+
 def opts_parser():
     """ Argument parser object """
     import argparse
@@ -19,25 +22,32 @@ def opts_parser():
         '-l', '--list', type=common_parser.nodes_list_from_str,
         dest='nodes_list', help='nodes list, may be given multiple times')
 
-    nodes_group.add_argument('-a', '--algo', default='syncronous',
-                             choices=ALGOS.keys(), help='Algorithm to run')
-
     nodes_group.add_argument(
-        '-o', '--out-file', required=True,
+        '-o', '--out-file',
         dest='outfile', help='Files where to output traces')
 
     return parser
 
 def main():
-
-	parser = opts_parser()
+    parser = opts_parser()
     opts = parser.parse_args()
-
     opts.with_a8 = False # needed, as we are not using a8 nodes
-
     # Load the selected nodes
-	nodes_list = SerialAggregator.select_nodes(opts)
-	
+    nodes_list = serial.SerialAggregator.select_nodes(opts)
+    print nodes_list
+    receiver = line.Receiver()
+
+    with serial.SerialAggregator(nodes_list, print_lines=True, line_handler=receiver.parse_line) as aggregator:
+        # Issue neighbourhood lookup for each node
+        for node in nodes_list:
+            print "Topology search for %s" %(node)
+            aggregator.send_nodes([node], "t")
+            time.sleep(2)
+
+        # Aggregate neighbourhood
+        aggregator.send_nodes(None, "l")
+        time.sleep(5)
+        print receiver.neighbours
 
 if __name__ == '__main__':
-	main()
+    main()

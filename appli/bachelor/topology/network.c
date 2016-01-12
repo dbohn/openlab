@@ -135,7 +135,9 @@ void lookup_neighbours() {
 // So use at your own risk!
 void print_neighbours() {
 	int i;
+	MESSAGE("NGB;%u", neighboursCount);
 	for (i = 0; i < neighboursCount; i++) {
+		#if defined(LONG_NEIGHBOUR_LOG) && LONG_NEIGHBOUR_LOG == 1
 		struct node my_node = node_from_uid(neighbours[i]);
 
 		if (my_node.num != 0) {
@@ -153,11 +155,15 @@ void print_neighbours() {
 	            break;
         	}
         	
-        	MESSAGE("NGB;%04x;%s-%u;\n", neighbours[i], node_str, my_node.num);
+        	printf(";%04x(%s-%u)", neighbours[i], node_str, my_node.num);
 	    } else {
-	        MESSAGE("NGB;%04x;\n", neighbours[i]);
+	        printf(";%04x", neighbours[i]);
 	    }
+	    #else
+	    	printf(";%04x", neighbours[i]);
+	    #endif
 	}
+	printf("\n");
 }
 
 static void handleReceivedHello(uint16_t src_addr, int8_t rssi) {
@@ -198,7 +204,7 @@ static void handleHelloAck(uint16_t src_addr, int8_t rssi) {
 	int i = 0;
 	for (i = 0; i < MAXNEIGHBOURS; ++i) {
 		if (neighbours[i] == src_addr) {
-			MESSAGE("KNOWN;%04x;⅞n", src_addr);
+			MESSAGE("KNOWN;%04x;\n", src_addr);
 			return;
 		}
 		if (neighbours[i] == 0) {
