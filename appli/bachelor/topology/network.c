@@ -11,9 +11,9 @@
 #include "feedback.h"
 
 // Type of the broadcast HELLO Message
-#define MSG_HELLO 	  1
+#define MSG_HELLO 	  	1
 // The add reply
-#define MSG_HELLO_ACK	  2
+#define MSG_HELLO_ACK   2
 
 #define ADDR_BROADCAST 0xFFFF
 
@@ -24,19 +24,6 @@
 // This constant does not take the CSMA Mac Layer
 // into account thus we subtract that size, it adds to a package
 #define MAXPKGSIZE PHY_MAX_TX_LENGTH - 4
-
-// Define an upper limit to the number of neighbours
-// it is desirable that all neighbours fit into one package
-// thus we make this number dependent on the MAXPKGSIZE
-// we add two bytes to transmit a message type
-// One adress is of type uint16_t
-#define MAXNEIGHBOURS ((MAXPKGSIZE - 2)/ sizeof(uint16_t))
-
-// Define a minimum signal quality
-#define RSSI_THRESHOLD  -70
-
-// How often the algorithm will try to spread the information
-#define NUM_TRIES 5
 
 //static soft_timer_t topology_alarm[1];
 
@@ -79,7 +66,7 @@ static void do_send(handler_arg_t arg)
 
     ret = mac_csma_data_send(send_cfg->addr, send_cfg->pkt, send_cfg->length);
     if (ret != 0) {
-        MESSAGE("SENT;%04x;%u;\n", send_cfg->addr, send_cfg->try);
+        DEBUG_MSG("SENT;%04x;%u;\n", send_cfg->addr, send_cfg->try);
     } else {
     	ERROR("SEND-ERR;%04x;%u;\n", send_cfg->addr, send_cfg->try);
         // ERROR("Send to %04x failed, try %u. Retrying\n",
@@ -118,16 +105,6 @@ void send_package_uuid(uint16_t uuid, void *packet, size_t length) {
 	send(uuid, packet, length);
 }
 
-/*void send_hello(handler_arg_t arg) {
-	if (helo_counter < NUM_TRIES) {
-		helo_counter++;
-		uint8_t pkg = MSG_HELLO;
-		send(ADDR_BROADCAST, &pkg, 1);
-	} else {
-		soft_timer_stop(topology_alarm);
-	}
-}*/
-
 void reset_neighbours(uint32_t channel, uint32_t transmission_power) {
 	// Remove any existing neighbours
 	memset(neighbours, 0, sizeof(neighbours));
@@ -151,14 +128,6 @@ void lookup_neighbours() {
 
 	uint8_t pkg = MSG_HELLO;
 	send(ADDR_BROADCAST, &pkg, 1);
-
-	// We want to try finding our neighbours more than once
-    //soft_timer_set_handler(topology_alarm, send_hello, (handler_arg_t) 0);
-
-    // Initialize the active thread timer
-    //soft_timer_start(topology_alarm, soft_timer_s_to_ticks(2), 1);
-
-	//send_hello((handler_arg_t)0);
 }
 
 // This method prints all currently known neighbours
@@ -206,7 +175,6 @@ static void handleReceivedHello(uint16_t src_addr, int8_t rssi) {
 		{
 			if (neighbours[i] == 0) {
 				MESSAGE("ADD;%04x;\n", src_addr);
-				//printf("%04x: ADD: %d\n", iotlab_uid(), src_addr);
 				neighbours[i] = src_addr;
 				neighboursCount++;
 
@@ -252,7 +220,7 @@ void network_csma_data_received(uint16_t src_addr, const uint8_t *data,
 
 	//printf("Message received!\n");
 	
-	MESSAGE("INCOMING;%u;\n", type);
+	DEBUG_MSG("INCOMING;%u;\n", type);
 
 	switch (type) {
 		case (MSG_HELLO):

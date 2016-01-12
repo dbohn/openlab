@@ -6,6 +6,19 @@
 #include "printf.h"
 #include "iotlab_uid.h"
 
+// Define an upper limit to the number of neighbours
+// it is desirable that all neighbours fit into one package
+// thus we make this number dependent on the MAXPKGSIZE
+// we add two bytes to transmit a message type
+// One adress is of type uint16_t
+#define MAXNEIGHBOURS ((MAXPKGSIZE - 2)/ sizeof(uint16_t))
+
+// Define a minimum signal quality
+#define RSSI_THRESHOLD  -70
+
+// How often the algorithm will try to spread the information
+#define NUM_TRIES 5
+
 void lookup_neighbours();
 
 void print_neighbours();

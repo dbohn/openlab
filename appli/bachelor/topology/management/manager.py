@@ -1,5 +1,6 @@
 
 from iotlabaggregator import serial
+from iotlabcli.parser import common as common_parser
 
 def opts_parser():
     """ Argument parser object """
@@ -22,10 +23,6 @@ def opts_parser():
                              choices=ALGOS.keys(), help='Algorithm to run')
 
     nodes_group.add_argument(
-        '-n', '--num-loop', type=int, required=True,
-        dest='num_loop', help='number_of_loops_to_run')
-
-    nodes_group.add_argument(
         '-o', '--out-file', required=True,
         dest='outfile', help='Files where to output traces')
 
@@ -38,8 +35,9 @@ def main():
 
     opts.with_a8 = False # needed, as we are not using a8 nodes
 
+    # Load the selected nodes
 	nodes_list = SerialAggregator.select_nodes(opts)
-	pass
+	
 
 if __name__ == '__main__':
 	main()

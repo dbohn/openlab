@@ -22,12 +22,6 @@ static unsigned int pickPeer(uint32_t numberOfPeers) {
 	return random_rand32() % numberOfPeers;
 }
 
-static void handle_timer(handler_arg_t arg)
-{
-    // The thread is now active thus execute the active_thread method
-    event_post(EVENT_QUEUE_APPLI, active_thread, NULL);
-}
-
 /**
  * This method returns a segment of the cache, that can be transmitted
  * 
@@ -54,6 +48,35 @@ cache_segment prepareMsg() {
 	segment_id = (segment_id + 1) % (CACHE_SIZE/MAX_SEGMENT_SIZE);
 
 	return seg;
+}
+
+void update(uint16_t sender, gossip_message *received_message, cache_segment* cseg) {
+	
+	//int i = 0;
+	//uint8_t updateFlag = 0;
+
+	uint8_t* cache_value = get_cache_value();
+	cache_value = cache_value + cseg->start;
+
+	uint32_t myValue;
+	uint32_t receivedValue;
+
+	memcpy(&myValue, cache_value, sizeof(uint32_t));
+	memcpy(&receivedValue, cseg->value, sizeof(uint32_t));
+
+	if (myValue < receivedValue) {
+		// We received a new maximum, so refresh your cache!
+
+		set_cache_segment(cseg, sender, received_message->source);
+
+		MESSAGE("NEW-CACHE;%04x;%u;%u;\n", sender, received_message->round, receivedValue);
+	}
+}
+
+static void handle_timer(handler_arg_t arg)
+{
+    // The thread is now active thus execute the active_thread method
+    event_post(EVENT_QUEUE_APPLI, active_thread, NULL);
 }
 
 /**
@@ -99,7 +122,6 @@ void inject_value(uint32_t val) {
 
 	set_cache_segment(&seg, me, me);
 
-	//set_cache(&val, sizeof(val), me, me);
 	segment_id = (segment_id + 1) % (CACHE_SIZE/MAX_SEGMENT_SIZE);
 
 	MESSAGE("INJECT;%u;\n", val);
@@ -144,29 +166,6 @@ void active_thread(handler_arg_t arg) {
 	
 }
 
-void update(uint16_t sender, gossip_message *received_message, cache_segment* cseg) {
-	
-	//int i = 0;
-	//uint8_t updateFlag = 0;
-
-	uint8_t* cache_value = get_cache_value();
-	cache_value = cache_value + cseg->start;
-
-	uint32_t myValue;
-	uint32_t receivedValue;
-
-	memcpy(&myValue, cache_value, sizeof(uint32_t));
-	memcpy(&receivedValue, cseg->value, sizeof(uint32_t));
-
-	if (myValue < receivedValue) {
-		// We received a new maximum, so refresh your cache!
-
-		set_cache_segment(cseg, sender, received_message->source);
-
-		MESSAGE("NEW-CACHE;%04x;%u;%u;\n", sender, received_message->round, receivedValue);
-	}
-}
-
 /**
  * This executes the step listed for the "passive thread" and is only invoked,
  * if a message was received.
@@ -187,7 +186,6 @@ void passive_thread(uint16_t src_addr, const uint8_t *data, uint8_t length) {
 
 	// On PUSH-Message answer with PULL - Message
 	if (received_message.type == MSG_PUSH) {
-		//send_cache(src_addr, MSG_PULL, get_cache());
 		send_cache_segment(received_message.round, src_addr, MSG_PULL, &cseg);
 	}
 
@@ -196,7 +194,7 @@ void passive_thread(uint16_t src_addr, const uint8_t *data, uint8_t length) {
 
 void gossip_csma_data_received(uint16_t src_addr, const uint8_t *data,
 				     uint8_t length, int8_t rssi, uint8_t lqi) {
-	//MESSAGE("RECV;%u\n", length);
+	
 	if (length == sizeof(gossip_message)) {
 		passive_thread(src_addr, data, length);
 	}

@@ -44,17 +44,6 @@ data_cache* get_cache() {
 	return &cache;
 }
 
-/*void send_cache(uint16_t addr, uint8_t type, data_cache *cp) {
-	static gossip_message msg;
-	msg.type = type;
-
-	msg.value = cp->value;
-	//msg.sender = me;
-	msg.source = cp->source;
-
-	send_package_uuid(addr, &msg, sizeof(gossip_message));
-}*/
-
 uint8_t send_cache_segment(uint16_t round_num, uint16_t addr, uint8_t type, cache_segment* cseg) {
 	static gossip_message msg;
 	int i;
@@ -75,7 +64,6 @@ uint8_t send_cache_segment(uint16_t round_num, uint16_t addr, uint8_t type, cach
 	{
 		msg.value[2+i] = cache.value[cseg->start + i];
 	}
-	//memcpy(&msg.value + 2, cache.value + cseg->start, 4);
 
 	send_package_uuid(addr, &msg, sizeof(gossip_message));
 
