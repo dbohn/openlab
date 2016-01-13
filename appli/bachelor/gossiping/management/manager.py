@@ -60,6 +60,7 @@ def main():
         print "Infecting %s(%s)" %(initiator[0], initiator[1])
         receiver.infect(initiator[0])
         aggregator.send_nodes([initiator[1]], "i22\n")
+        aggregator.send_nodes([initiator[1]], "x")
         wait = input("")
 
 
