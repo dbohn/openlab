@@ -51,13 +51,15 @@ def main():
         aggregator.send_nodes(None, "l")
         time.sleep(3)
         renderer = GraphvizRenderer()
-        renderer.render(receiver.mergeLinks())
+        renderer.render(receiver.mergeLinks(), receiver.friendlyNames)
 
         # Switch to Gossiping
         aggregator.send_nodes(None, "g")
         time.sleep(1)
-        #initiator = random.choice(nodes_list)
-        #receiver.infect(initiator)
+        initiator = random.choice(receiver.friendlyNames.items())
+        print "Infecting %s(%s)" %(initiator[0], initiator[1])
+        receiver.infect(initiator[0])
+        aggregator.send_nodes([initiator[1]], "i22\n")
         wait = input("")
 
 
