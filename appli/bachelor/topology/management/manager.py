@@ -3,6 +3,7 @@ from iotlabaggregator import serial
 from iotlabcli.parser import common as common_parser
 
 import line
+from GraphRenderer import GraphvizRenderer
 import time
 
 def opts_parser():
@@ -34,10 +35,11 @@ def main():
     opts.with_a8 = False # needed, as we are not using a8 nodes
     # Load the selected nodes
     nodes_list = serial.SerialAggregator.select_nodes(opts)
-    print nodes_list
+    print "Starting manager..."
+    print "Gestartete Knoten: %s" %(", ".join(nodes_list))
     receiver = line.Receiver()
 
-    with serial.SerialAggregator(nodes_list, print_lines=True, line_handler=receiver.parse_line) as aggregator:
+    with serial.SerialAggregator(nodes_list, print_lines=False, line_handler=receiver.parse_line) as aggregator:
         # Issue neighbourhood lookup for each node
         for node in nodes_list:
             print "Topology search for %s" %(node)
@@ -46,8 +48,9 @@ def main():
 
         # Aggregate neighbourhood
         aggregator.send_nodes(None, "l")
-        time.sleep(5)
-        print receiver.neighbours
+        time.sleep(3)
+        renderer = GraphvizRenderer()
+        renderer.render(receiver.mergeLinks())
 
 if __name__ == '__main__':
     main()
