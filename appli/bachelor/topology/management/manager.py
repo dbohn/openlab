@@ -5,6 +5,7 @@ from iotlabcli.parser import common as common_parser
 import line
 from GraphRenderer import GraphvizRenderer
 import time
+import random
 
 def opts_parser():
     """ Argument parser object """
@@ -37,7 +38,7 @@ def main():
     nodes_list = serial.SerialAggregator.select_nodes(opts)
     print "Starting manager..."
     print "Gestartete Knoten: %s" %(", ".join(nodes_list))
-    receiver = line.Receiver()
+    receiver = line.Receiver(nodes_list)
 
     with serial.SerialAggregator(nodes_list, print_lines=False, line_handler=receiver.parse_line) as aggregator:
         # Issue neighbourhood lookup for each node
@@ -51,6 +52,14 @@ def main():
         time.sleep(3)
         renderer = GraphvizRenderer()
         renderer.render(receiver.mergeLinks())
+
+        # Switch to Gossiping
+        aggregator.send_nodes(None, "g")
+        time.sleep(1)
+        #initiator = random.choice(nodes_list)
+        #receiver.infect(initiator)
+        wait = input("")
+
 
 if __name__ == '__main__':
     main()

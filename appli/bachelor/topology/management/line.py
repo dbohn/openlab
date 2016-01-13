@@ -1,9 +1,17 @@
+import time
 
 class Receiver(object):
 	"""docstring for Receiver"""
-	def __init__(self):
+	def __init__(self, nodes):
 		super(Receiver, self).__init__()
 		self.neighbours = {}
+		self.infected = set()
+		self.nodes = nodes
+
+	def infect(self, node, init=False):
+		if init:
+			self.startTime = time.time()
+		self.infected.add(node)
 	
 	def parse_line(self, identifier, line):
 		#print identifier, line
@@ -19,6 +27,8 @@ class Receiver(object):
 				neighbours = lineComponents[5:]
 				#print neighbours
 				self.neighbours[sender] = neighbours
+			elif msgType == "NEW-CACHE":
+				self.infect(sender)
 
 	def mergeLinks(self):
 		simple = set()
