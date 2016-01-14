@@ -11,4 +11,7 @@
 // Set to 1 to see friendly node id!
 #define LONG_NEIGHBOUR_LOG 0
 
+// The intervall of the active thread in ms
+#define GOSSIP_INTERVAL 2000
+
 #endif

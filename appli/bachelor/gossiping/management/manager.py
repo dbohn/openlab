@@ -58,10 +58,13 @@ def main():
         time.sleep(1)
         initiator = random.choice(receiver.friendlyNames.items())
         print "Infecting %s(%s)" %(initiator[0], initiator[1])
-        receiver.infect(initiator[0])
+        receiver.infect(initiator[0], True)
         aggregator.send_nodes([initiator[1]], "i22\n")
         aggregator.send_nodes([initiator[1]], "x")
+        print "Insert a number(!) to stop."
         wait = input("")
+        if not receiver.finished:
+            receiver.finishMeasurement(time.time())
 
 
 if __name__ == '__main__':

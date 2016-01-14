@@ -135,10 +135,10 @@ void inject_value(uint32_t val) {
  */
 void active_thread(handler_arg_t arg) {
 	roundCounter++;
-	// if the thread has no neighbpurs, we cannot pick one...
+	// if the thread has no neighbours, we cannot pick one...
 	// additionally, if our cache value is 0, we are not infected
 	// thus we do not send to reduce load on the network
-	if (number_of_neighbours() == 0 || cache_empty()) {
+	if (number_of_neighbours() == 0) {
 		return;
 	}
 	// p <- RandomPeer()
