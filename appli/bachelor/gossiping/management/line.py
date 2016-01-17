@@ -1,7 +1,7 @@
 import time
 
 class Receiver(object):
-	"""docstring for Receiver"""
+	"""Parser for received lines"""
 	def __init__(self, nodes, debug=False):
 		super(Receiver, self).__init__()
 		self.neighbours = {}
@@ -17,22 +17,24 @@ class Receiver(object):
 		self.debug = False
 
 	def infect(self, node, init=False):
+		"""Log the node as infected"""
 		if init:
 			self.startTime = time.time()
 		self.infected.add(node)
 	
 	def parse_line(self, identifier, line):
+		"""Parse an incoming line"""
 		if self.debug:
 			print identifier, line
 
 		lineComponents = line.split(";")
 		if len(lineComponents) > 2:
+			# Msg format: <sender>;<uptime>;(MSG|ERR);<type>;...
 			sender = lineComponents[0]
 			uptime = lineComponents[1]
 			msgKind = lineComponents[2]
 			msgType = lineComponents[3]
 
-			#print sender,msgKind,msgType
 			if msgKind == "MSG":
 				if msgType == "NGB":
 					numOfNeigbours = lineComponents[4]
@@ -57,6 +59,7 @@ class Receiver(object):
 				self.friendlyNames[sender] = identifier
 
 	def finishMeasurement(self, endTime):
+		"""Calculate all the times and log them"""
 		self.finished = True
 		timeDiff = endTime - self.startTime
 		with open("exec_log-%s.log" %(time.strftime("%d-%m-%Y-%H-%M")), "w") as log:
@@ -67,6 +70,7 @@ class Receiver(object):
 		print "Done in %d rounds, taken %d seconds, less than %d gossips" %(self.rounds, timeDiff, self.gossips)
 
 	def mergeLinks(self):
+		"""Create links from the reported neighbours. Taken from distributed_algorithm example"""
 		simple = set()
 		double = set()
 		for node, neighbours in self.neighbours.items():

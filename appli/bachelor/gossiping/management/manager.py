@@ -6,6 +6,7 @@ import line
 from GraphRenderer import GraphvizRenderer
 import time
 import random
+import sys
 
 def opts_parser():
     """ Argument parser object """
@@ -25,8 +26,7 @@ def opts_parser():
         dest='nodes_list', help='nodes list, may be given multiple times')
 
     nodes_group.add_argument(
-        '-o', '--out-file',
-        dest='outfile', help='Files where to output traces')
+        '-o', '--output-graph', help='Save the network graph', action='store_true')
 
     return parser
 
@@ -37,7 +37,7 @@ def main():
     # Load the selected nodes
     nodes_list = serial.SerialAggregator.select_nodes(opts)
     print "Starting manager..."
-    print "Gestartete Knoten: %s" %(", ".join(nodes_list))
+    print "Managed nodes: %s" %(", ".join(nodes_list))
     receiver = line.Receiver(nodes_list)
 
     with serial.SerialAggregator(nodes_list, print_lines=False, line_handler=receiver.parse_line) as aggregator:
@@ -50,8 +50,10 @@ def main():
         # Aggregate neighbourhood
         aggregator.send_nodes(None, "l")
         time.sleep(3)
-        renderer = GraphvizRenderer()
-        renderer.render(receiver.mergeLinks(), receiver.friendlyNames)
+        mergedLinks = receiver.mergeLinks()
+        if opts.output_graph:
+            renderer = GraphvizRenderer()
+            renderer.render(receiver.mergeLinks(), receiver.friendlyNames)
 
         # Switch to Gossiping
         aggregator.send_nodes(None, "g")
@@ -61,8 +63,8 @@ def main():
         receiver.infect(initiator[0], True)
         aggregator.send_nodes([initiator[1]], "i22\n")
         aggregator.send_nodes([initiator[1]], "x")
-        print "Insert a number(!) to stop."
-        wait = input("")
+        print "Insert new line to interrupt."
+        wait = sys.stdin.readline()
         if not receiver.finished:
             receiver.finishMeasurement(time.time())
 

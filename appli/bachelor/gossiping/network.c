@@ -57,6 +57,7 @@ struct msg_send
 
 /**
  * Method tries to send package NUM_TRIES times.
+ * Extracted from distributed_algorithm IoT-Lab example
  * @param arg msg_send struct with data
  */
 static void do_send(handler_arg_t arg)
@@ -69,15 +70,18 @@ static void do_send(handler_arg_t arg)
         DEBUG_MSG("SENT;%04x;%u;\n", send_cfg->addr, send_cfg->try);
     } else {
     	ERROR("SEND-ERR;%04x;%u;\n", send_cfg->addr, send_cfg->try);
-        // ERROR("Send to %04x failed, try %u. Retrying\n",
-        //        send_cfg->addr, send_cfg->try);
         if (send_cfg->try++ < NUM_TRIES)
             event_post(EVENT_QUEUE_APPLI, do_send, arg);
-        //soft_timer_ms_to_ticks(20);
     }
 
 }
 
+/**
+ * This method prepares a message, that will be sent
+ * @param addr The address of the receiver
+ * @param packet The data to be sent
+ * @param length The length of the data to be sent
+ */
 static void send(uint16_t addr, void *packet, size_t length)
 {
     static struct msg_send send_cfg;
@@ -89,6 +93,12 @@ static void send(uint16_t addr, void *packet, size_t length)
     event_post(EVENT_QUEUE_APPLI, do_send, &send_cfg);
 }
 
+/**
+ * Sends a packet to the peer_id-th peer of this node
+ * @param peer_id The index of the neighbourhood array
+ * @param packet  Pointer to the package
+ * @param length  Length of the package
+ */
 void send_package(int peer_id, void *packet, size_t length)
 {
 	// Do not allow to send to unexisting peer!
@@ -101,10 +111,21 @@ void send_package(int peer_id, void *packet, size_t length)
 	send(address, packet, length);
 }
 
+/**
+ * Send a package to the peer given by the UUID
+ * @param uuid   The UUID of the peer
+ * @param packet Pointer to the package
+ * @param length Length of the package
+ */
 void send_package_uuid(uint16_t uuid, void *packet, size_t length) {
 	send(uuid, packet, length);
 }
 
+/**
+ * Resets the list of neighbours and initializes radio module
+ * @param channel            Radio channel
+ * @param transmission_power Transmission power
+ */
 void reset_neighbours(uint32_t channel, uint32_t transmission_power) {
 	// Remove any existing neighbours
 	memset(neighbours, 0, sizeof(neighbours));
@@ -117,22 +138,26 @@ void reset_neighbours(uint32_t channel, uint32_t transmission_power) {
 	send(ADDR_BROADCAST, &pkg, 1);
 }
 
+/**
+ * Send HELLO-broadcast message
+ */
 void lookup_neighbours() {
 
 	// Procedure:
 	// 1. Each node broadcasts a HELLO-message
 	// 2. Upon reception of a broadcast message,
 	// register the sender node as a neighbour
-	// This assumes a symmetric wireless link.
-	// i.e. that if (u,v) \in E => (v,u) \in E
 
 	uint8_t pkg = MSG_HELLO;
 	send(ADDR_BROADCAST, &pkg, 1);
 }
 
-// This method prints all currently known neighbours
-// Attention: This is not protected against race conditions
-// So use at your own risk!
+// 
+/**
+ * This method prints all currently known neighbours
+ * Attention: This is not protected against race conditions
+ * So use at your own risk!
+ */
 void print_neighbours() {
 	int i;
 	MESSAGE("NGB;%u", neighboursCount);
@@ -166,10 +191,14 @@ void print_neighbours() {
 	printf("\n");
 }
 
+/**
+ * This method handles a received HELLO message
+ * @param src_addr Sender of the HELLO
+ * @param rssi     Signal strength of the received message
+ */
 static void handleReceivedHello(uint16_t src_addr, int8_t rssi) {
 	// Check if received rssi above threshold
 	// thus the signal strength is high enough
-	// printf("%04x: REC HELLO;%d;%d\n", iotlab_uid(), src_addr, rssi);
 	if (rssi > RSSI_THRESHOLD) {
 		// We assume, that we will not loose any nodes
 		// i.e. all nodes will be running until the end of the experiment
@@ -200,6 +229,9 @@ static void handleReceivedHello(uint16_t src_addr, int8_t rssi) {
 	}
 }
 
+/**
+ * Handle received ACK package
+ */
 static void handleHelloAck(uint16_t src_addr, int8_t rssi) {
 	int i = 0;
 	for (i = 0; i < MAXNEIGHBOURS; ++i) {
@@ -216,7 +248,14 @@ static void handleHelloAck(uint16_t src_addr, int8_t rssi) {
 	}
 }
 
-// Message reception handler
+/**
+ * Message reception handler
+ * @param src_addr Sender
+ * @param data     Received data
+ * @param length   Length of the received data
+ * @param rssi     Signal strengh
+ * @param lqi      Link Quality Indicator
+ */
 void network_csma_data_received(uint16_t src_addr, const uint8_t *data,
 				     uint8_t length, int8_t rssi, uint8_t lqi) {
 	// The first byte of the received message is always the message type.

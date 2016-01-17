@@ -61,14 +61,18 @@ static void switch_to_gossiping()
 
 static void begin_lookup()
 {
-    //printf("Beginning lookup!\n");
     lookup_neighbours();
 }
 
+/**
+ * Handle the received character
+ * @param arg [description]
+ */
 static void handle_cmd(handler_arg_t arg)
 {
     char read = (char) (uint32_t) arg;
 
+    // Number input for injection of value
     if (reading_number) {
         if (read >= '0' && read <= '9') {
             num_cache = num_cache*10 + (read - '0');
@@ -98,6 +102,9 @@ static void handle_cmd(handler_arg_t arg)
     }
 }
 
+/**
+ * Application entry point
+ */
 int main()
 {
     hardware_init();
@@ -108,7 +115,11 @@ int main()
 }
 
 
-/* Reception of a char on UART and store it in 'cmd' */
+/**
+ * Handler for received char via USART
+ * @param arg Argument structure
+ * @param c   The character
+ */
 static void char_rx(handler_arg_t arg, uint8_t c) {
     // This is an Interupt service routine
     // => we should return as soon as possible!
@@ -117,6 +128,14 @@ static void char_rx(handler_arg_t arg, uint8_t c) {
             (handler_arg_t)(uint32_t) c);
 }
 
+/**
+ * Received packet handler
+ * @param src_addr The sender of the packet
+ * @param data     The sent data
+ * @param length   The length of the sent data
+ * @param rssi     Signal Strength
+ * @param lqi      Link Quality Indicator
+ */
 void mac_csma_data_received(uint16_t src_addr, const uint8_t *data,
                      uint8_t length, int8_t rssi, uint8_t lqi) {
 

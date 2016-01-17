@@ -50,6 +50,12 @@ cache_segment prepareMsg() {
 	return seg;
 }
 
+/**
+ * This method shall update the cache
+ * @param sender           Sender of the received message
+ * @param received_message the received message
+ * @param cseg             the received cache segment
+ */
 void update(uint16_t sender, gossip_message *received_message, cache_segment* cseg) {
 	
 	//int i = 0;
